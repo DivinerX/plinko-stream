@@ -185,7 +185,11 @@ function createMultipliers(engine: Matter.Engine, risk: 'low' | 'medium' | 'high
   Composite.add(engine.world, multipliersBodies)
 }
 
-export function startPlinkoGame(session: GameSession, ws: WS): void {
+export function startPlinkoGame(
+  session: GameSession,
+  ws: WS,
+  broadcast: (message: any) => void
+): void {
   const engine = Engine.create({
     enableSleeping: false,
     timing: {
@@ -206,6 +210,7 @@ export function startPlinkoGame(session: GameSession, ws: WS): void {
   Matter.Runner.run(runner, engine);
 
   // Replace Events.on('afterUpdate') with setInterval
+  let countDown = 0
   const positionInterval = setInterval(() => {
     const bodies = Composite.allBodies(engine.world);
     const ballPositions = new Map();
@@ -219,14 +224,58 @@ export function startPlinkoGame(session: GameSession, ws: WS): void {
       }
     });
 
-    ws.send(JSON.stringify({
+    broadcast({
       category: 'plinko',
       type: 'positions',
       positions: Array.from(ballPositions.entries())
-    }));
+    });
+    if (ballPositions.size === 0) {
+      countDown++
+      if (countDown > 20) {
+        clearInterval(positionInterval);
+        Matter.Runner.stop(runner);
+        World.clear(engine.world, false);
+        Engine.clear(engine);
+        ws.send(JSON.stringify({
+          category: 'plinko',
+          type: 'running',
+          isRunning: false
+        }))
+      }
+    }
   }, 30);
 
-  Events.on(engine, 'collisionStart', handleCollisions(ws, engine));
+  Events.on(engine, 'collisionStart', (event: Matter.IEventCollision<Matter.Engine>) => {
+    event.pairs.forEach(pair => {
+      const { bodyA, bodyB } = pair;
+      const ballBody = bodyA.label.includes('ball-') ? bodyA :
+        bodyB.label.includes('ball-') ? bodyB : null;
+      const multiplierBody = bodyA.label.includes('sink-') ? bodyA :
+        bodyB.label.includes('sink-') ? bodyB : null;
+
+      if (ballBody && multiplierBody) {
+        const multiplierValue = parseFloat(multiplierBody.label.split('-')[1]);
+        broadcast({
+          category: 'plinko',
+          type: 'win',
+          sinkId: multiplierBody.id,
+          multiplier: multiplierValue
+        });
+        World.remove(engine.world, ballBody);
+      }
+    });
+
+    const collisions = event.pairs.map(pair => {
+      if (pair.bodyA.label.includes('pin-') || pair.bodyB.label.includes('pin-'))
+        return pair.bodyA.id;
+    });
+
+    broadcast({
+      category: 'plinko',
+      type: 'collision',
+      collisions
+    });
+  });
 
   let ballCount = 0;
   const ballInterval = setInterval(() => {

@@ -1,6 +1,7 @@
 import { TLine } from "./multipliers";
+import { WebSocket } from "ws";
 
-interface GameSession {
+export interface GameSession {
   rows: TLine;
   balls: number;
   risk: 'low' | 'medium' | 'high';
@@ -9,7 +10,12 @@ interface GameSession {
   positions: Map<number, { x: number; y: number }>;
 }
 
-const config = {
+export type GameClients = {
+  ws: WebSocket,
+  client: Map<string, GameSession>
+}
+
+export const config = {
   pins: {
     startPins: 1,
     pinSize: 4,
@@ -26,5 +32,3 @@ const config = {
     height: 500
   }
 };
-
-export { config, GameSession };

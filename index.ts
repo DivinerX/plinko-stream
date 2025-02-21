@@ -9,7 +9,19 @@ import { findSession } from './helper';
 
 const app = express();
 const server = createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ 
+  noServer: true,
+  path: "/ws" 
+});
+
+server.on('upgrade', (request, socket, head) => {
+  if (request.url === '/ws') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  }
+});
+
 app.use(express.json());
 app.use(cors())
 

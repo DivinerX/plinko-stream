@@ -11,7 +11,17 @@ const physics_1 = require("./physics");
 const helper_1 = require("./helper");
 const app = (0, express_1.default)();
 const server = (0, http_1.createServer)(app);
-const wss = new ws_1.WebSocketServer({ server });
+const wss = new ws_1.WebSocketServer({
+    noServer: true,
+    path: "/ws"
+});
+server.on('upgrade', (request, socket, head) => {
+    if (request.url === '/ws') {
+        wss.handleUpgrade(request, socket, head, (ws) => {
+            wss.emit('connection', ws, request);
+        });
+    }
+});
 app.use(express_1.default.json());
 app.use((0, cors_1.default)());
 const gameRooms = new Map();

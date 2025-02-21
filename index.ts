@@ -15,7 +15,7 @@ const wss = new WebSocketServer({
 });
 
 server.on('upgrade', (request, socket, head) => {
-  if (request.url === '/ws') {
+  if (request.url?.startsWith('/ws')) {
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request);
     });

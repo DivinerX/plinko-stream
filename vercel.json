@@ -9,16 +9,16 @@
   "routes": [
     {
       "src": "/ws",
-      "dest": "dist/index.js"
+      "dest": "dist/index.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+      }
     },
     {
       "src": "/(.*)",
-      "dest": "dist/index.js",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "max-age=0, s-maxage=86400, stale-while-revalidate"
-      }
+      "dest": "dist/index.js"
     }
   ]
 }

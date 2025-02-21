@@ -1,0 +1,10 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#level-up-path)">
+<path d="M12.6666 5.33467H10.3266L7.99992 16L5.67325 5.33467H3.33325L7.99992 0L12.6666 5.33467Z" fill="white"/>
+</g>
+<defs>
+<clipPath id="level-up-path">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>

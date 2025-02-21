@@ -2,6 +2,7 @@ import express from 'express';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import cors from 'cors';
+import path from 'path';
 import { startPlinkoGame } from './physics';
 import { GameClients } from './config';
 import { TLine } from './multipliers';
@@ -9,31 +10,7 @@ import { findSession } from './helper';
 
 const app = express();
 const server = createServer(app);
-const wss = new WebSocketServer({ 
-  noServer: true
-});
-
-// Handle upgrades
-server.on('upgrade', (request, socket, head) => {
-  console.log('Upgrade request received:', request.url);
-  
-  if (!request.url) {
-    socket.destroy();
-    return;
-  }
-
-  // Remove query parameters if any
-  const pathname = request.url.split('?')[0];
-
-  if (pathname === '/ws') {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      console.log('WebSocket connection established');
-      wss.emit('connection', ws, request);
-    });
-  } else {
-    socket.destroy();
-  }
-});
+const wss = new WebSocketServer({ server });
 
 // Add a health check endpoint
 app.get('/health', (req, res) => {
@@ -46,7 +23,12 @@ app.use(cors({
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.use(express.static(path.join(__dirname, './public')));
 
+// Serve index.html for the root route
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(__dirname, './public/index.html'));
+});
 const gameRooms = new Map<string, GameClients[]>();
 
 // Broadcast to all clients in a room

@@ -11,19 +11,35 @@ const physics_1 = require("./physics");
 const helper_1 = require("./helper");
 const app = (0, express_1.default)();
 const server = (0, http_1.createServer)(app);
-const wss = new ws_1.WebSocketServer({
-    noServer: true,
-    path: "/ws"
-});
-server.on('upgrade', (request, socket, head) => {
-    if (request.url === '/ws') {
-        wss.handleUpgrade(request, socket, head, (ws) => {
-            wss.emit('connection', ws, request);
-        });
-    }
+const wss = new ws_1.WebSocketServer({ server });
+// Handle upgrades
+// server.on('upgrade', (request, socket, head) => {
+//   console.log('Upgrade request received:', request.url);
+//   if (!request.url) {
+//     socket.destroy();
+//     return;
+//   }
+//   // Remove query parameters if any
+//   const pathname = request.url.split('?')[0];
+//   if (pathname === '/ws') {
+//     wss.handleUpgrade(request, socket, head, (ws) => {
+//       console.log('WebSocket connection established');
+//       wss.emit('connection', ws, request);
+//     });
+//   } else {
+//     socket.destroy();
+//   }
+// });
+// Add a health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
 });
 app.use(express_1.default.json());
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 const gameRooms = new Map();
 // Broadcast to all clients in a room
 const broadcastToRoom = (roomKey, message) => {
@@ -73,7 +89,7 @@ app.post('/api/plinko', (req, res) => {
     });
 });
 wss.on('connection', (ws) => {
-    console.log("new ws connection");
+    console.log("New WebSocket connection established");
     let _sessionId = `user-${Date.now()}`;
     let currentRoomKey = null;
     ws.on('message', (message) => {

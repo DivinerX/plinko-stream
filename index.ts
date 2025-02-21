@@ -10,20 +10,42 @@ import { findSession } from './helper';
 const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ 
-  noServer: true,
-  path: "/ws" 
+  noServer: true
 });
 
+// Handle upgrades
 server.on('upgrade', (request, socket, head) => {
-  if (request.url?.startsWith('/ws')) {
+  console.log('Upgrade request received:', request.url);
+  
+  if (!request.url) {
+    socket.destroy();
+    return;
+  }
+
+  // Remove query parameters if any
+  const pathname = request.url.split('?')[0];
+
+  if (pathname === '/ws') {
     wss.handleUpgrade(request, socket, head, (ws) => {
+      console.log('WebSocket connection established');
       wss.emit('connection', ws, request);
     });
+  } else {
+    socket.destroy();
   }
 });
 
+// Add a health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.use(express.json());
-app.use(cors())
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 const gameRooms = new Map<string, GameClients[]>();
 
@@ -82,7 +104,7 @@ app.post('/api/plinko', (req, res) => {
 });
 
 wss.on('connection', (ws) => {
-  console.log("new ws connection");
+  console.log("New WebSocket connection established");
   let _sessionId: string = `user-${Date.now()}`;
   let currentRoomKey: string | null = null;
 

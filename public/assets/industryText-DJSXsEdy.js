@@ -1,0 +1,1 @@
+import{j as r}from"./index-C2GDbwd7.js";const c=({variant:t,children:s,className:e="",color:x="text-white"})=>{const n=`font-[industry] uppercase ${x} ${e}`,a={h1:"text-5xl",h2:"text-3xl",h3:"text-xl",span:"text-base",p:"text-base"},o=t;return r.jsx(o,{className:`${n} ${a[t]}`,children:s})};export{c as I};
